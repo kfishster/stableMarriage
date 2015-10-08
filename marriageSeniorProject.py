@@ -15,10 +15,11 @@ class client:
 			self.team = str_del[2:]
 	
 	def assign_rankings(self, prefs_matrix, preferred_students, other_students):
-		
+		# client basically inputs its preferences into the big preference matrix
 		for i, stu in enumerate(self.prefs):
 			prefs_matrix[self.choice_num-1][stu][0] = i
 		
+		# shuffle all the other students who you have not yet chosen
 		random.shuffle(preferred_students)
 		shift_index = len(self.prefs)
 		
@@ -37,6 +38,7 @@ class client:
 			else:
 				shift_index -= 1
 	
+	# returns the student who is kicked out, None if no one is kicked out
 	def ask_to_marry(self, stu, prefs_matrix):
 		# team not full, let's put this person in
 		
@@ -77,7 +79,7 @@ class student:
 			if pref != '':
 				self.prefs.append(int(pref))
 		
-	
+	# Not really used, but here for consistency
 	def assign_rankings(self, prefs_matrix, clients):
 		randomize_other_clients = list(set(clients) - set(self.prefs))
 		#print self.prefs
@@ -127,6 +129,7 @@ for dat in data[1:]:
 other_students = list(set(students.keys()) - set(preferred_students))
 
 # at prefs_matrix[client index][student netid] first number is client's rank for student, second is student's rank for client
+# the student's rank for client isn't used yet...I use the internal param for preference...sooo
 prefs_matrix = [{} for y in range(len(clients))]
 for cli_pref in prefs_matrix:
 	for stu in students.keys():
@@ -139,6 +142,7 @@ for stu in students.values():
 for cli in clients:
 	cli.assign_rankings(prefs_matrix, preferred_students, other_students)
 
+# Take all students, put them into a queue, process, pop
 unassigned_students = [stu for stu in students.values()]
 while len(unassigned_students) > 0:
 	stu = random.choice(unassigned_students)
@@ -148,7 +152,8 @@ while len(unassigned_students) > 0:
 	
 	for pref in stu.prefs:
 		kicked_out = clients[pref-1].ask_to_marry(stu, prefs_matrix)
-		#print kicked_out
+		
+		# if no one is kicked out, everything is ok, if you're kicked out, try the next preference, if someone else is kicked out, put them back in the queue
 		if kicked_out == None:
 			married = True
 			break
