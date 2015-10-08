@@ -1,4 +1,5 @@
 import random, math, copy, sys
+from multiprocessing import Pool
 
 class client:
 	def __init__(self, client_str):
@@ -197,7 +198,7 @@ for dat in data[1:]:
 	if stu_netid in students.keys():
 		preferred_students.append(stu_netid)
 
-def iteration(students, clients, preferred_students):
+def iteration((students, clients, preferred_students)):
 	other_students = list(set(students.keys()) - set(preferred_students))
 	
 	# at prefs_matrix[client index][student netid] first number is client's rank for student, second is student's rank for client
@@ -261,13 +262,15 @@ def iteration(students, clients, preferred_students):
 		if not married:
 			kicked_out.client = None
 			unassigned_students.append(stu)
+	
+	return score_sorting(students), clients
 
 def write_to_file(clients, score, worst_pref):
 	w = open('identifyingFiles/assignments/assignments_' + str(score) + '_' + str(worst_pref) + '.csv', 'w')
-	w.write('client, students\n')
+	w.write('client id, client name, students\n')
 	
 	for cli in clients:
-		w.write(cli.name + ', ')
+		w.write(str(cli.choice_num) + ', ' + cli.name + ', ')
 		for stu in cli.team:
 			w.write(stu.netid + ', ')
 		for i in range(6-len(cli.team)):
@@ -292,20 +295,27 @@ clients_copy = copy.deepcopy(clients)
 
 #see_distribution(clients_copy, students_copy)
 
-for i in range(iterations):
-	students_copy = copy.deepcopy(students)
-	clients_copy = copy.deepcopy(clients)
-	iteration(students_copy, clients_copy, preferred_students)	
+pool = Pool(processes=8)
 
-	(score, worst_pref, pref_count, working) = score_sorting(students_copy)
+# mutlithreading for the win
+poolParams = []
+for x in range(8):
+	poolParams.append((copy.deepcopy(students), copy.deepcopy(clients)))
 	
-	if score < lowest_score:
-		write_to_file(clients_copy, score, worst_pref)
-		lowest_score = score
-		print pref_count, score
-	
+for i in range(iterations):
 	if i % 1000 == 0:
-		print i
+		print '---',i,'---'
+
+	for x in range(8):
+		poolParams[x] = (copy.deepcopy(students), copy.deepcopy(clients), preferred_students)
+	
+	for (score, worst_pref, pref_count, working), clients_copy in pool.map(iteration, poolParams):
+		
+		if score < lowest_score:
+			write_to_file(clients_copy, score, worst_pref)
+			lowest_score = score
+			print pref_count, score
+
 	
 # # unassigned_students, students, clients
 # students_copy = copy.deepcopy(students)
