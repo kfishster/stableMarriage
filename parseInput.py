@@ -49,9 +49,14 @@ f = open(sys.argv[1], 'r')
 data = f.read().split('\n')
 f.close()
 
+students = []
+
 w = open('identifyingFiles/parsedStudents.csv', 'w')
 w.write('name, netid, email, sponsored picks (space delimited), non-sponsored picks (space delimited), wants to work with (space delimited), doesn\'t want to work with (space delimited)\n')
 for dat in data[1:]:
 	stu = student(dat.split('\t'))
+	if stu.netId in students:
+		print stu.netId
+	students.append(stu.netId)
 	w.write(str(stu) + '\n')
 w.close()
